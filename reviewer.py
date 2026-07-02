@@ -1,6 +1,6 @@
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 
 # ── Config ────────────────────────────────────────────────────
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
@@ -8,8 +8,7 @@ GITHUB_TOKEN   = os.environ["GITHUB_TOKEN"]
 REPO           = os.environ["GITHUB_REPOSITORY"]
 PR_NUMBER      = os.environ["PR_NUMBER"]
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ── Fetch PR diff ─────────────────────────────────────────────
 def get_pr_diff():
@@ -37,7 +36,10 @@ Be concise, specific, and actionable. Reference line numbers where possible.
 {diff[:8000]}
 ```
 """
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
     return response.text
 
 # ── Post comment on PR ────────────────────────────────────────
