@@ -1,14 +1,14 @@
 import os
 import requests
-from google import genai
+from groq import Groq
 
 # ── Config ────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GITHUB_TOKEN   = os.environ["GITHUB_TOKEN"]
-REPO           = os.environ["GITHUB_REPOSITORY"]
-PR_NUMBER      = os.environ["PR_NUMBER"]
+GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+REPO         = os.environ["GITHUB_REPOSITORY"]
+PR_NUMBER    = os.environ["PR_NUMBER"]
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = Groq(api_key=GROQ_API_KEY)
 
 # ── Fetch PR diff ─────────────────────────────────────────────
 def get_pr_diff():
@@ -21,7 +21,7 @@ def get_pr_diff():
     response.raise_for_status()
     return response.text
 
-# ── Review diff with Gemini ───────────────────────────────────
+# ── Review diff with Groq ─────────────────────────────────────
 def review_code(diff):
     prompt = f"""You are an expert code reviewer. Review the following pull request diff and provide:
 
@@ -36,11 +36,11 @@ Be concise, specific, and actionable. Reference line numbers where possible.
 {diff[:8000]}
 ```
 """
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}]
     )
-    return response.text
+    return response.choices[0].message.content
 
 # ── Post comment on PR ────────────────────────────────────────
 def post_comment(review):
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         print("No diff found — skipping review")
         exit(0)
 
-    print("Sending to Gemini for review...")
+    print("Sending to Groq for review...")
     review = review_code(diff)
 
     print("Posting comment...")
